@@ -19,7 +19,7 @@
 # PY stage that simply does a pip install on our requirements
 ######################################################################
 ARG PY_VER=3.7.9
-FROM python:${PY_VER} AS superset-py
+FROM python:${PY_VER}-slim AS superset-py
 
 RUN mkdir /app \
         && apt-get update -y \
@@ -45,10 +45,12 @@ RUN cd /app \
 ######################################################################
 # Node stage to deal with static asset construction
 ######################################################################
-FROM node:14 AS superset-node
+FROM node:14-alpine AS superset-node
 
 ARG NPM_VER=7
-RUN npm install -g npm@${NPM_VER}
+RUN apk -U upgrade \
+    && apk add bash \
+    && npm install -g npm@${NPM_VER}
 
 ARG NPM_BUILD_CMD="build"
 ENV BUILD_CMD=${NPM_BUILD_CMD}
@@ -74,7 +76,21 @@ RUN cd /app/superset-frontend \
 # Final lean image...
 ######################################################################
 ARG PY_VER=3.7.9
-FROM python:${PY_VER} AS lean
+FROM python:${PY_VER}-slim AS lean
+
+USER root
+
+RUN apt-get update -y && \
+    apt-get install --no-install-recommends -y firefox-esr && \
+    apt-get install --no-install-recommends -y wget
+
+ENV GECKODRIVER_VERSION=0.29.0
+RUN wget -q https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz && \
+    tar -x geckodriver -zf geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz -O > /usr/bin/geckodriver && \
+    chmod 755 /usr/bin/geckodriver && \
+    rm geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz
+
+RUN pip install --no-cache gevent psycopg2 redis
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
