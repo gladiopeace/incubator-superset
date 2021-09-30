@@ -334,9 +334,15 @@ class S3ScheduleView(SupersetModelView, DeleteMixin):  # pylint: disable=too-man
 #        if not str(item.s3_path).startswith("s3://"):
 #            raise SupersetException("Path must start with s3://")
         s3 = boto3.resource('s3')
-        bucket = s3.Bucket(item.s3_path.split('/',1)[0])
+        if item.s3_path.startswith('s3://'):
+          clean_s3_path = item.s3_path.split('s3://',1)[1]
+        else :
+          clean_s3_path = item.s3_path.split('s3://',1)[0]
+          bucket = s3.Bucket(clean_s3_path.split('/',1)[0])
+          raise SupersetException("Invalid bucket format " + str(item.s3_path) + ". Accepted format s3://<bucket>/<path>")
+        bucket = s3.Bucket(clean_s3_path.split('/',1)[0])
         if not bucket.creation_date:
-            raise SupersetException("Invalid Bucket")
+            raise SupersetException("Invalid Bucket " + str(bucket))
         super(S3ScheduleView, self).pre_add(item)
 
     def pre_update(self, item):
