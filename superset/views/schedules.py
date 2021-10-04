@@ -345,5 +345,14 @@ class S3ScheduleView(SupersetModelView, DeleteMixin):  # pylint: disable=too-man
             raise SupersetException("Invalid Bucket " + str(bucket))
         super(S3ScheduleView, self).pre_add(item)
 
+    def post_add(self, item):
+        # Notify the user that schedule changes will be activate only in the
+        # next hour
+        if item.active:
+            flash("Schedule changes will get applied in one hour", "warning")
+
+
     def pre_update(self, item):
         self.pre_add(item)
+        self.post_add(item)
+
