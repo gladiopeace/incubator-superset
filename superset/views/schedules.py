@@ -339,10 +339,10 @@ class S3ScheduleView(SupersetModelView, DeleteMixin):  # pylint: disable=too-man
         else :
           clean_s3_path = item.s3_path.split('s3://',1)[0]
           bucket = s3.Bucket(clean_s3_path.split('/',1)[0])
-          raise SupersetException("Invalid bucket format " + str(item.s3_path) + ". Accepted format s3://<bucket>/<path>")
+          raise SupersetException("Invalid bucket format " + str(item.s3_path) + ". Accepted format s3://<bucket>/<prefix>")
         bucket = s3.Bucket(clean_s3_path.split('/',1)[0])
         if not bucket.creation_date:
-            raise SupersetException("Invalid Bucket " + str(bucket))
+            raise SupersetException("Invalid Bucket, " + str(bucket) + " cannot be found")
         super(S3ScheduleView, self).pre_add(item)
 
     def post_add(self, item):
